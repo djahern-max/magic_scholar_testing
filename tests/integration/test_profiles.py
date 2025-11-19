@@ -42,9 +42,7 @@ class TestProfileRetrieval:
 
         assert response.status_code in [401, 403]
 
-    def test_profile_includes_settings(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_profile_includes_settings(self, client: TestClient, auth_headers: dict):
         """Test profile response includes settings"""
         response = client.get("/api/v1/profiles/me", headers=auth_headers)
 
@@ -58,9 +56,7 @@ class TestProfileRetrieval:
 class TestProfileUpdate:
     """Test profile update operations"""
 
-    def test_update_basic_info(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_update_basic_info(self, client: TestClient, auth_headers: dict):
         """Test updating basic profile information"""
         update_data = {
             "state": "CA",
@@ -80,9 +76,7 @@ class TestProfileUpdate:
         assert data["zip_code"] == "94102"
         assert data["high_school_name"] == "San Francisco High School"
 
-    def test_update_academic_info(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_update_academic_info(self, client: TestClient, auth_headers: dict):
         """Test updating academic information"""
         update_data = {
             "graduation_year": 2026,
@@ -104,9 +98,7 @@ class TestProfileUpdate:
         assert data["sat_score"] == 1450
         assert data["act_score"] == 33
 
-    def test_update_extracurriculars(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_update_extracurriculars(self, client: TestClient, auth_headers: dict):
         """Test updating extracurricular activities"""
         update_data = {
             "extracurriculars": [
@@ -133,9 +125,7 @@ class TestProfileUpdate:
         assert len(data["extracurriculars"]) == 2
         assert data["extracurriculars"][0]["activity"] == "Robotics Club"
 
-    def test_update_work_experience(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_update_work_experience(self, client: TestClient, auth_headers: dict):
         """Test updating work experience"""
         update_data = {
             "work_experience": [
@@ -157,9 +147,7 @@ class TestProfileUpdate:
         assert len(data["work_experience"]) == 1
         assert data["work_experience"][0]["employer"] == "Tech Startup Inc"
 
-    def test_update_honors_awards(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_update_honors_awards(self, client: TestClient, auth_headers: dict):
         """Test updating honors and awards"""
         update_data = {
             "honors_awards": [
@@ -180,9 +168,7 @@ class TestProfileUpdate:
 
     def test_update_skills(self, client: TestClient, auth_headers: dict):
         """Test updating skills"""
-        update_data = {
-            "skills": ["Python", "Java", "React", "Public Speaking"]
-        }
+        update_data = {"skills": ["Python", "Java", "React", "Public Speaking"]}
 
         response = client.put(
             "/api/v1/profiles/me", json=update_data, headers=auth_headers
@@ -198,9 +184,7 @@ class TestProfileUpdate:
 class TestProfileValidation:
     """Test profile validation rules"""
 
-    def test_invalid_state_code(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_invalid_state_code(self, client: TestClient, auth_headers: dict):
         """Test state code must be 2 characters"""
         update_data = {"state": "CAL"}  # Should be 2 chars
 
@@ -210,9 +194,7 @@ class TestProfileValidation:
 
         assert response.status_code == 422
 
-    def test_invalid_gpa_too_high(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_invalid_gpa_too_high(self, client: TestClient, auth_headers: dict):
         """Test GPA maximum validation"""
         update_data = {"gpa": 5.5}  # Max is 5.0
 
@@ -222,9 +204,7 @@ class TestProfileValidation:
 
         assert response.status_code == 422
 
-    def test_invalid_sat_score(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_invalid_sat_score(self, client: TestClient, auth_headers: dict):
         """Test SAT score validation"""
         update_data = {"sat_score": 1700}  # Max is 1600
 
@@ -241,16 +221,31 @@ class TestProfileSettings:
 
     def test_get_settings(self, client: TestClient, auth_headers: dict):
         """Test getting user settings"""
+        # Force profile creation with minimal data
+        profile_response = client.put(
+            "/api/v1/profiles/me", json={"state": "CA"}, headers=auth_headers
+        )
+        assert profile_response.status_code == 200
+
+        # Now get settings - should work since profile exists
         response = client.get("/api/v1/profiles/me/settings", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
-        assert "confetti_enabled" in data or "settings" in data
+        assert "confetti_enabled" in data
+        # Default should be True
+        assert data["confetti_enabled"] is True
 
-    def test_update_confetti_setting(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_update_confetti_setting(self, client: TestClient, auth_headers: dict):
         """Test updating confetti_enabled setting"""
+        # Force profile creation - MUST do this in EACH test
+        # because each test runs in isolation with db rollback
+        profile_response = client.put(
+            "/api/v1/profiles/me", json={"state": "CA"}, headers=auth_headers
+        )
+        assert profile_response.status_code == 200
+
+        # Update confetti setting to False
         update_data = {"confetti_enabled": False}
 
         response = client.patch(
@@ -259,24 +254,22 @@ class TestProfileSettings:
 
         assert response.status_code == 200
         data = response.json()
-        
-        # Check the setting was updated
+        # The response format is: {"message": "...", "settings": {...}}
+        assert "settings" in data
+        assert data["settings"]["confetti_enabled"] is False
+
+        # Verify the setting persisted
         get_response = client.get("/api/v1/profiles/me/settings", headers=auth_headers)
+        assert get_response.status_code == 200
         settings_data = get_response.json()
-        
-        # Handle different response formats
-        confetti_value = settings_data.get("confetti_enabled", 
-                                           settings_data.get("settings", {}).get("confetti_enabled"))
-        assert confetti_value is False
+        assert settings_data["confetti_enabled"] is False
 
 
-@pytest.mark.integration  
+@pytest.mark.integration
 class TestFileUploads:
     """Test file upload functionality"""
 
-    def test_upload_headshot_jpg(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_upload_headshot_jpg(self, client: TestClient, auth_headers: dict):
         """Test uploading JPG headshot"""
         # Create fake image file
         fake_image = io.BytesIO(b"fake jpg image content")
@@ -291,9 +284,7 @@ class TestFileUploads:
         # May succeed or fail depending on image validation
         assert response.status_code in [200, 400, 422]
 
-    def test_upload_resume_pdf(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_upload_resume_pdf(self, client: TestClient, auth_headers: dict):
         """Test uploading PDF resume"""
         # Create fake PDF file
         fake_pdf = io.BytesIO(b"%PDF-1.4 fake pdf content")
@@ -325,13 +316,10 @@ class TestFileUploads:
 class TestMatchingInstitutions:
     """Test institution matching"""
 
-    def test_get_matching_institutions(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_get_matching_institutions(self, client: TestClient, auth_headers: dict):
         """Test getting matching institutions"""
         response = client.get(
-            "/api/v1/profiles/me/matching-institutions",
-            headers=auth_headers
+            "/api/v1/profiles/me/matching-institutions", headers=auth_headers
         )
 
         assert response.status_code == 200
@@ -347,19 +335,15 @@ class TestMatchingInstitutions:
         client.put("/api/v1/profiles/me", json=update_data, headers=auth_headers)
 
         response = client.get(
-            "/api/v1/profiles/me/matching-institutions",
-            headers=auth_headers
+            "/api/v1/profiles/me/matching-institutions", headers=auth_headers
         )
 
         assert response.status_code == 200
 
-    def test_matching_with_custom_limit(
-        self, client: TestClient, auth_headers: dict
-    ):
+    def test_matching_with_custom_limit(self, client: TestClient, auth_headers: dict):
         """Test matching with custom result limit"""
         response = client.get(
-            "/api/v1/profiles/me/matching-institutions?limit=10",
-            headers=auth_headers
+            "/api/v1/profiles/me/matching-institutions?limit=10", headers=auth_headers
         )
 
         assert response.status_code == 200

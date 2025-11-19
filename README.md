@@ -17,10 +17,10 @@ magic_scholar_testing/
 │   │   ├── __init__.py
 │   │   ├── test_auth_flow.py           ✅ COMPLETE (24 tests)
 │   │   ├── test_institutions.py        ✅ COMPLETE (31 tests)
-│   │   ├── test_scholarships.py        🚧 TODO
-│   │   ├── test_profiles.py            🚧 TODO
-│   │   ├── test_costs.py               🚧 TODO
-│   │   ├── test_admissions.py          🚧 TODO
+│   │   ├── test_scholarships.py        ✅ COMPLETE
+│   │   ├── test_profiles.py            ✅ COMPLETE
+│   │   ├── test_costs.py               ✅ COMPLETE
+│   │   ├── test_admissions.py          ✅ COMPLETE
 │   │   ├── test_scholarship_tracking.py 🚧 TODO
 │   │   └── test_college_tracking.py    🚧 TODO
 │   ├── unit/                    # Unit tests
