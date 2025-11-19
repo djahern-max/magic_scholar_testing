@@ -248,6 +248,8 @@ pytest tests/ -v
 ```bash
 pytest tests/integration/test_auth_flow.py -v
 pytest tests/integration/test_institutions.py -v
+pytest tests/integration/test_scholarships.py -v
+pytest tests/integration/.py -v
 ```
 
 ### Run with coverage
