@@ -21,8 +21,8 @@ magic_scholar_testing/
 │   │   ├── test_profiles.py            ✅ COMPLETE
 │   │   ├── test_costs.py               ✅ COMPLETE
 │   │   ├── test_admissions.py          ✅ COMPLETE
-│   │   ├── test_scholarship_tracking.py 🚧 TODO
-│   │   └── test_college_tracking.py    🚧 TODO
+│   │   ├── test_scholarship_tracking.py✅ COMPLETE
+│   │   └── test_college_tracking.py    ✅ COMPLETE
 │   ├── unit/                    # Unit tests
 │   │   └── __init__.py
 │   └── docs/                    # Test documentation
