@@ -28,8 +28,7 @@ from app.models.scholarship import Scholarship
 # ===========================
 
 TEST_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:@localhost:5432/magicscholar_test"
+    "DATABASE_URL", "postgresql://postgres:@localhost:5432/magicscholar_test"
 )
 
 test_engine = create_engine(
@@ -37,16 +36,13 @@ test_engine = create_engine(
     poolclass=StaticPool,
 )
 
-TestSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=test_engine
-)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 # ===========================
 # DATABASE FIXTURES
 # ===========================
+
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_test_database():
@@ -62,9 +58,9 @@ def db_session() -> Generator[Session, None, None]:
     connection = test_engine.connect()
     transaction = connection.begin()
     session = TestSessionLocal(bind=connection)
-    
+
     yield session
-    
+
     session.close()
     transaction.rollback()
     connection.close()
@@ -73,23 +69,25 @@ def db_session() -> Generator[Session, None, None]:
 @pytest.fixture(scope="function")
 def client(db_session: Session) -> Generator[TestClient, None, None]:
     """Provide a test client for API endpoints."""
+
     def override_get_db():
         try:
             yield db_session
         finally:
             pass
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
     with TestClient(app) as c:
         yield c
-    
+
     app.dependency_overrides.clear()
 
 
 # ===========================
 # AUTHENTICATION FIXTURES
 # ===========================
+
 
 @pytest.fixture
 def test_user(db_session: Session) -> User:
@@ -101,7 +99,7 @@ def test_user(db_session: Session) -> User:
         last_name="User",
         hashed_password=get_password_hash("TestPassword123!"),
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
     )
     db_session.add(user)
     db_session.commit()
@@ -119,7 +117,7 @@ def test_user_2(db_session: Session) -> User:
         last_name="User2",
         hashed_password=get_password_hash("TestPassword123!"),
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
     )
     db_session.add(user)
     db_session.commit()
@@ -137,7 +135,7 @@ def admin_user(db_session: Session) -> User:
         last_name="User",
         hashed_password=get_password_hash("AdminPassword123!"),
         is_active=True,
-        is_superuser=True
+        is_superuser=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -173,6 +171,7 @@ def admin_headers(admin_token: str) -> Dict[str, str]:
 # DATA FIXTURES
 # ===========================
 
+
 @pytest.fixture
 def test_profile(db_session: Session, test_user: User) -> UserProfile:
     """Create a test user profile."""
@@ -186,7 +185,7 @@ def test_profile(db_session: Session, test_user: User) -> UserProfile:
         intended_major="Computer Science",
         state="MA",
         city="Boston",
-        zip_code="02101"
+        zip_code="02101",
     )
     db_session.add(profile)
     db_session.commit()
@@ -205,7 +204,7 @@ def test_institution(db_session: Session) -> Institution:
         control_type=ControlType.PRIVATE_NONPROFIT,
         student_faculty_ratio=Decimal("3.0"),
         size_category="Medium",
-        locale="City: Large"
+        locale="City: Large",
     )
     db_session.add(institution)
     db_session.commit()
@@ -217,14 +216,16 @@ def test_institution(db_session: Session) -> Institution:
 def test_scholarship(db_session: Session) -> Scholarship:
     """Create a test scholarship."""
     scholarship = Scholarship(
-        name="Test STEM Scholarship",
+        title="Test STEM Scholarship",
         organization="Test Foundation",
+        scholarship_type="stem",  # Must be one of the ScholarshipType enum values
         amount_min=5000,
         amount_max=10000,
         deadline=datetime.now() + timedelta(days=60),
         description="Scholarship for STEM students",
-        eligibility_requirements="Must be pursuing STEM degree, 3.5+ GPA",
-        application_url="https://example.com/apply"
+        status="active",  # Default but explicit
+        difficulty_level="moderate",  # Default but explicit
+        is_renewable=False,
     )
     db_session.add(scholarship)
     db_session.commit()
